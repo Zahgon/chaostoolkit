@@ -39,10 +39,7 @@ def validate_vars(
     Process all `--var key=value` and return a dictionary of them with the
     value converted to the appropriate type.
     """
-    try:
-        return convert_vars(value)
-    except ValueError as x:
-        raise click.BadParameter(str(x))
+    pass
 
 
 @click.command()
@@ -153,109 +150,4 @@ def run(
 ) -> Journal:
     """Run the experiment loaded from SOURCE, either a local file or a
     HTTP resource. SOURCE can be formatted as JSON or YAML."""
-    settings = load_settings(ctx.obj["settings_path"]) or {}
-    has_deviated = False
-    has_failed = False
-
-    experiment_vars = merge_vars(var, var_file)
-
-    try:
-        load_global_controls(settings, control_file)
-    except TypeError:
-        logger.debug("Failed to load controls", exc_info=True)
-        logger.warning(
-            "Passing control files only work with chaostoolkit-lib 1.33+, you "
-            f"run {chaoslib_version}. The control files will be ignored."
-            "Please upgrade with `pip install -U chaostoolkit-lib`"
-        )
-        load_global_controls(settings)
-
-    try:
-        experiment = load_experiment(
-            source, settings, verify_tls=not no_verify_tls
-        )
-    except InvalidSource as x:
-        logger.error(str(x))
-        logger.debug(x)
-        ctx.exit(1)
-
-    notify(settings, RunFlowEvent.RunStarted, experiment)
-
-    if not no_validation:
-        try:
-            ensure_experiment_is_valid(experiment)
-        except ChaosException as x:
-            logger.error(str(x))
-            logger.debug(x)
-            ctx.exit(1)
-
-    experiment["dry"] = Dry.from_string(dry)
-
-    # we first check the settings for the runtime settings
-    runtime = settings.setdefault("runtime", {})
-    runtime.setdefault("rollbacks", {}).setdefault(
-        "strategy", DEFAULT_ROLLBACK_STRATEGY
-    )
-    runtime.setdefault("hypothesis", {}).setdefault(
-        "strategy", DEFAULT_HYPOTHESIS_STRATEGY
-    )
-
-    # we allow to override via the experiment
-    experiment_runtime = experiment.get("runtime")
-    if experiment_runtime:
-        runtime["rollbacks"]["strategy"] = experiment_runtime.get(
-            "rollbacks", {}
-        ).get("strategy", DEFAULT_ROLLBACK_STRATEGY)
-        runtime["hypothesis"]["strategy"] = experiment_runtime.get(
-            "hypothesis", {}
-        ).get("strategy", DEFAULT_HYPOTHESIS_STRATEGY)
-
-    # finally the cli takes precedence over both of the above
-    if hypothesis_strategy is None:
-        hypothesis_strategy = runtime["hypothesis"]["strategy"]
-    else:
-        runtime["hypothesis"]["strategy"] = hypothesis_strategy
-
-    if rollback_strategy is None:
-        rollback_strategy = runtime["rollbacks"]["strategy"]
-    else:
-        runtime["rollbacks"]["strategy"] = rollback_strategy
-
-    logger.debug(
-        f"Runtime strategies: hypothesis - {hypothesis_strategy} "
-        f"/ rollbacks - {rollback_strategy}"
-    )
-
-    ssh_strategy = check_hypothesis_strategy_spelling(hypothesis_strategy)
-
-    schedule = Schedule(
-        continuous_hypothesis_frequency=hypothesis_frequency,
-        fail_fast=fail_fast,
-    )
-
-    journal = run_experiment(
-        experiment,
-        settings=settings,
-        strategy=ssh_strategy,
-        schedule=schedule,
-        experiment_vars=experiment_vars,
-    )
-    has_deviated = journal.get("deviated", False)
-    has_failed = journal["status"] != "completed"
-    if "dry" in journal["experiment"]:
-        journal["experiment"]["dry"] = dry
-    with open(journal_path, "w") as r:
-        json.dump(journal, r, indent=2, ensure_ascii=False, default=encoder)
-
-    if journal["status"] == "completed":
-        notify(settings, RunFlowEvent.RunCompleted, journal)
-    elif has_failed:
-        notify(settings, RunFlowEvent.RunFailed, journal)
-
-    if has_deviated:
-        notify(settings, RunFlowEvent.RunDeviated, journal)
-
-    if (has_failed or has_deviated) and not no_exit:
-        ctx.exit(1)
-
-    return journal
+    pass

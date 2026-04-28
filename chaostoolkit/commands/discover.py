@@ -40,23 +40,4 @@ def discover(
     no_install: bool = False,
 ) -> Discovery:
     """Discover capabilities and experiments."""
-    settings = load_settings(ctx.obj["settings_path"])
-    try:
-        notify(settings, DiscoverFlowEvent.DiscoverStarted, package)
-        discovery = disco(
-            package_name=package,
-            discover_system=not no_system_info,
-            download_and_install=not no_install,
-        )
-    except DiscoveryFailed as err:
-        notify(settings, DiscoverFlowEvent.DiscoverFailed, package, err)
-        logger.debug(f"Failed to discover {package}", exc_info=err)
-        logger.fatal(str(err))
-        return
-
-    with open(discovery_path, "w") as d:
-        d.write(json.dumps(discovery, indent=2, default=encoder))
-    logger.info(f"Discovery outcome saved in {discovery_path}")
-
-    notify(settings, DiscoverFlowEvent.DiscoverCompleted, discovery)
-    return discovery
+    pass
